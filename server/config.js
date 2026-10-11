@@ -1,6 +1,7 @@
 // ============================================================================
 // config.js — Configuração central do FreeClip (.env + valores padrão)
 // ============================================================================
+const os = require('os');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
@@ -28,8 +29,12 @@ module.exports = {
   MAX_UPLOAD_MB: intEnv('MAX_UPLOAD_MB', 2048),
   // Duração máxima do corte em minutos (padrão 3 min)
   MAX_CLIP_MINUTES: intEnv('MAX_CLIP_MINUTES', 3),
-  // Renders simultâneos (padrão 2)
-  MAX_RENDER_JOBS: intEnv('MAX_RENDER_JOBS', 2),
+  // Renders simultâneos: 1 em máquinas fracas (≤2 núcleos, ex.: plano free),
+  // 2 nas demais. Em host fraco, 2 jobs paralelos disputam a mesma CPU
+  // minúscula e AMBOS ficam mais lentos — por isso o padrão é adaptativo.
+  MAX_RENDER_JOBS: process.env.MAX_RENDER_JOBS
+    ? intEnv('MAX_RENDER_JOBS', 2)
+    : (os.cpus().length <= 2 ? 1 : 2),
   // Apagar clipes/artefatos com mais de N dias (padrão 7)
   CLEANUP_DAYS: intEnv('CLEANUP_DAYS', 7),
   // Rate limit: resoluções de link da Kick por minuto, por IP

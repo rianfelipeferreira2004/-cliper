@@ -130,6 +130,9 @@ async function baixarClipe(bins, clip) {
         '--no-playlist', '--no-warnings', '--newline',
         '-f', 'best[ext=mp4]/best',
         '--merge-output-format', 'mp4',
+        // Fragmentos paralelos: acelera muito o download de HLS (.m3u8),
+        // que é o formato mais comum dos clipes da Kick
+        '--concurrent-fragments', '4',
         '--ffmpeg-location', path.dirname(bins.ffmpeg),
         '-o', destino,
         clip.urlCanonica,

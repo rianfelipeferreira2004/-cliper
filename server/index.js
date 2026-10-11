@@ -92,7 +92,8 @@ function prepararEstrutura() {
   });
 
   app.listen(cfg.PORT, () => {
-    console.log(`🎬 FreeClip rodando em  http://localhost:${cfg.PORT}`);
+    const cpus = require('os').cpus().length;
+    console.log(`🎬 FreeClip rodando em  http://localhost:${cfg.PORT} (${cpus} CPU(s), ${cfg.MAX_RENDER_JOBS} render simultâneo(s))`);
     if (!bins.ok) {
       console.log(`⚠  Faltando: ${bins.faltando.join(', ')} — veja as instruções acima.`);
     }

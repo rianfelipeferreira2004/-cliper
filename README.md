@@ -140,6 +140,11 @@ O projeto já vem com `Dockerfile` + `render.yaml`:
   sozinho); adicione um **volume** montado em `/app/data` para persistir.
 - **VPS (qualquer):** `docker build -t freeclip . && docker run -p 3000:3000 -v ./data:/app/data freeclip`.
 - A porta vem da variável `PORT`; o health check é `GET /api/health`.
+- **Desempenho em host fraco (plano free):** o app detecta ≤2 núcleos e limita
+  a 1 render por vez (paralelismo em CPU minúscula deixa tudo mais lento).
+  Para compilar mais rápido nesses planos: use **720p + 30fps** no modal, e
+  mantenha o serviço acordado com um ping grátis (ex.: UptimeRobot a cada
+  5 min) para evitar o cold start. Downloads HLS usam 4 fragmentos paralelos.
 - Nota: IPs de datacenter caem mais no Cloudflare da Kick — se um link não
   baixar na nuvem, atualize o yt-dlp (`npm run update-ytdlp`) ou suba o
   arquivo pelo upload (funciona igual).
