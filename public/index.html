@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreeClip — Crie clipes verticais</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+</head>
+<body>
+
+  <!-- ================================================================
+       TELA: MEUS CLIPES
+  ================================================================= -->
+  <section id="view-biblioteca" class="view">
+    <header class="topo">
+      <div class="logo">Free<span class="rosa">Clip</span></div>
+      <div class="topo-acoes">
+        <span id="encoder-info" class="encoder-info" title="Codificador de vídeo ativo"></span>
+        <button id="btn-limpar-cache" class="btn btn-fantasma">Limpar cache</button>
+        <button id="btn-criar" class="btn btn-amarelo">＋ Criar clipe</button>
+      </div>
+    </header>
+
+    <main class="biblioteca">
+      <h1>Meus clipes</h1>
+      <div id="grade-clipes" class="grade"></div>
+      <div id="bib-vazio" class="vazio" hidden>
+        <div class="vazio-icone">🎬</div>
+        <h2>Nenhum clipe ainda</h2>
+        <p>Cole um link da Kick ou envie um vídeo para começar.</p>
+        <button class="btn btn-amarelo" onclick="abrirModalCriar()">＋ Criar clipe</button>
+      </div>
+    </main>
+  </section>
+
+  <!-- ================================================================
+       TELA: EDITOR
+  ================================================================= -->
+  <section id="view-editor" class="view" hidden>
+    <header class="topo">
+      <nav class="breadcrumb">
+        <a href="#/" id="bc-voltar">Meus clipes</a>
+        <span class="sep">›</span>
+        <span id="bc-titulo">Novo clipe</span>
+      </nav>
+      <div class="topo-acoes">
+        <button id="btn-add-regiao" class="btn btn-fantasma">＋ Adicionar região</button>
+        <button id="btn-layout" class="btn btn-fantasma">▦ Layout</button>
+        <button id="btn-compilar" class="btn btn-amarelo">Compilar</button>
+      </div>
+    </header>
+
+    <div class="editor-corpo">
+      <!-- Área central: entrada / saída / ambos -->
+      <div class="editor-centro">
+        <div class="modo-seletor" role="tablist">
+          <button data-modo="ambos" class="ativo">Ambos</button>
+          <button data-modo="entrada">Entrada</button>
+          <button data-modo="saida">Saída</button>
+        </div>
+
+        <div class="palcos">
+          <!-- ENTRADA: vídeo original + regiões arrastáveis -->
+          <div id="wrap-entrada" class="palco-wrap">
+            <div class="palco-titulo">
+              <span>Entrada</span>
+              <span class="zoom-controles">
+                <button id="zoom-menos" class="btn-mini" title="Diminuir zoom">−</button>
+                <span id="zoom-valor">100%</span>
+                <button id="zoom-mais" class="btn-mini" title="Aumentar zoom">＋</button>
+                <button id="zoom-ajustar" class="btn-mini" title="Ajustar à tela">⤢ ajustar</button>
+              </span>
+            </div>
+            <div id="entrada-scroll" class="entrada-scroll">
+              <div id="palco-entrada" class="palco-entrada">
+                <video id="video-fonte" playsinline preload="auto"></video>
+                <div id="camada-regioes"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SAÍDA: preview 9:16 ao vivo via canvas -->
+          <div id="wrap-saida" class="palco-wrap">
+            <div class="palco-titulo"><span>Saída · 9:16</span></div>
+            <div class="saida-scroll">
+              <canvas id="canvas-saida" width="360" height="640"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- TIMELINE -->
+        <div id="timeline">
+          <div class="tl-controles">
+            <button id="btn-play" class="btn-mini tl-btn" title="Reproduzir/pausar (espaço)">▶</button>
+            <button id="btn-mute" class="btn-mini tl-btn" title="Mudo">🔊</button>
+            <span id="tl-tempo" class="tl-tempo">00:00.00 / 00:00.00</span>
+            <span class="spacer"></span>
+            <span id="tl-sel-info" class="tl-sel-info"></span>
+            <button id="btn-mark-in" class="btn-mini tl-btn" title="Atalho: I">⌈ marcar início</button>
+            <button id="btn-mark-out" class="btn-mini tl-btn" title="Atalho: O">marcar fim ⌋</button>
+          </div>
+          <div id="tl-trilha" class="tl-trilha">
+            <div id="tl-thumbs" class="tl-thumbs"></div>
+            <div id="tl-fora-esq" class="tl-fora"></div>
+            <div id="tl-fora-dir" class="tl-fora"></div>
+            <div id="tl-selecao" class="tl-selecao"></div>
+            <div id="tl-handle-in" class="tl-handle" title="Arraste para o início (I)"></div>
+            <div id="tl-handle-out" class="tl-handle" title="Arraste para o fim (O)"></div>
+            <div id="tl-playhead" class="tl-playhead"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAINEL DIREITO -->
+      <aside class="painel-direito">
+        <div class="abas">
+          <button data-aba="camadas" class="ativo">Camadas</button>
+          <button data-aba="configs">Configurações</button>
+        </div>
+
+        <!-- Aba Camadas -->
+        <div id="aba-camadas" class="aba-conteudo">
+          <p class="painel-dica">As regiões são empilhadas nos slots do layout nesta ordem.</p>
+          <ul id="lista-camadas" class="lista-camadas"></ul>
+          <div class="linha-cfg linha-trava">
+            <label class="switch">
+              <input type="checkbox" id="cfg-trava-proporcao" checked>
+              <span class="slider"></span>
+            </label>
+            <span>Proporção travada ao slot</span>
+          </div>
+        </div>
+
+        <!-- Aba Configurações -->
+        <div id="aba-configs" class="aba-conteudo" hidden>
+          <div class="grupo-cfg">
+            <label class="rotulo">Fundo</label>
+            <label class="radio"><input type="radio" name="fundo" value="preto" checked> Preto</label>
+            <label class="radio"><input type="radio" name="fundo" value="cor"> Cor sólida
+              <input type="color" id="cfg-fundo-cor" value="#121218">
+            </label>
+            <label class="radio"><input type="radio" name="fundo" value="desfocado"> Desfocado do próprio vídeo</label>
+          </div>
+
+          <div class="grupo-cfg">
+            <label class="rotulo">Modo de ajuste</label>
+            <label class="radio"><input type="radio" name="ajuste" value="preencher" checked> Preencher</label>
+            <label class="radio"><input type="radio" name="ajuste" value="conter"> Conter</label>
+          </div>
+
+          <div class="grupo-cfg">
+            <label class="rotulo">Headline sobre o vídeo</label>
+            <input type="text" id="cfg-headline-texto" maxlength="60" autocomplete="off"
+                   placeholder="Ex.: GOL HISTÓRICO! (vazio = sem headline)">
+            <label class="linha-cfg">
+              <span>Tamanho</span>
+              <input type="range" id="cfg-headline-tamanho" min="48" max="160" value="84">
+              <span id="cfg-headline-tamanho-valor">84</span>
+            </label>
+            <label class="linha-cfg">
+              <span>Posição Y</span>
+              <input type="range" id="cfg-headline-y" min="0" max="1920" step="2" value="960">
+              <span id="cfg-headline-y-valor">960</span>
+            </label>
+            <p class="painel-dica">Fonte Anton, contorno preto e sombra, direto sobre o vídeo (sem faixa).</p>
+          </div>
+
+          <div class="grupo-cfg">
+            <label class="rotulo">Áudio</label>
+            <label class="linha-cfg">
+              <span class="switch">
+                <input type="checkbox" id="cfg-audio" checked>
+                <span class="slider"></span>
+              </span>
+              <span id="cfg-audio-rotulo">Áudio ligado</span>
+            </label>
+            <label class="linha-cfg">
+              <span>Volume</span>
+              <input type="range" id="cfg-volume" min="0" max="100" value="100">
+              <span id="cfg-volume-valor">100%</span>
+            </label>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================================================================
+       MODAL: CRIAR CLIPE (URL da Kick ou upload)
+  ================================================================= -->
+  <div id="modal-criar" class="modal" hidden>
+    <div class="modal-caixa">
+      <div class="modal-topo">
+        <h2>Criar clipe</h2>
+        <button class="modal-fechar" data-fechar>✕</button>
+      </div>
+
+      <label class="rotulo">Link do clipe da Kick</label>
+      <div class="linha-url">
+        <input type="url" id="input-url" placeholder="https://kick.com/canal/clips/clip_XXXXXXXX" autocomplete="off">
+        <button id="btn-obter" class="btn btn-amarelo">Obter clipe</button>
+      </div>
+      <p id="criar-erro" class="msg-erro" hidden></p>
+
+      <div class="separador"><span>ou</span></div>
+
+      <div id="dropzone" class="dropzone" tabindex="0">
+        <div class="dropzone-icone">⇪</div>
+        <p><strong>Arraste um vídeo aqui</strong> ou clique para escolher</p>
+        <p class="dropzone-dica">MP4, MOV, WEBM ou MKV · até <span id="dropzone-limite">2 GB</span></p>
+        <input type="file" id="input-arquivo" accept="video/mp4,video/quicktime,video/webm,video/x-matroska,.mp4,.mov,.webm,.mkv" hidden>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       MODAL: LAYOUTS
+  ================================================================= -->
+  <div id="modal-layout" class="modal" hidden>
+    <div class="modal-caixa modal-largo">
+      <div class="modal-topo">
+        <h2>Escolher layout</h2>
+        <button class="modal-fechar" data-fechar>✕</button>
+      </div>
+      <div id="grade-layouts" class="grade-layouts"></div>
+      <div id="layout-personalizado" class="layout-personalizado" hidden>
+        <p>Arraste a divisória para posicionar os slots:</p>
+        <div id="lp-demo" class="lp-demo">
+          <div id="lp-slot-a" class="lp-slot lp-a">1</div>
+          <div id="lp-div" class="lp-div" title="Arraste"></div>
+          <div id="lp-slot-b" class="lp-slot lp-b">2</div>
+        </div>
+        <p class="lp-valor" id="lp-valor">60% / 40%</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       MODAL: COMPILAR (título, qualidade, progresso e conclusão)
+  ================================================================= -->
+  <div id="modal-compilar" class="modal" hidden>
+    <div class="modal-caixa">
+
+      <!-- Passo 1: formulário -->
+      <div id="comp-form">
+        <div class="modal-topo">
+          <h2>Compilar clipe</h2>
+          <button class="modal-fechar" data-fechar>✕</button>
+        </div>
+        <label class="rotulo" for="comp-titulo">Título</label>
+        <input type="text" id="comp-titulo" maxlength="140" autocomplete="off">
+        <p class="contador"><span id="comp-contador">0</span> de 140</p>
+
+        <div class="comp-opcoes">
+          <div>
+            <label class="rotulo">FPS</label>
+            <select id="comp-fps">
+              <option value="30">30</option>
+              <option value="60" selected>60</option>
+            </select>
+          </div>
+          <div>
+            <label class="rotulo">Qualidade</label>
+            <select id="comp-qualidade">
+              <option value="720">720p</option>
+              <option value="1080" selected>1080p</option>
+              <option value="1440">1440p</option>
+            </select>
+          </div>
+        </div>
+        <p id="comp-erro" class="msg-erro" hidden></p>
+        <button id="btn-iniciar-compilacao" class="btn btn-amarelo btn-grande">Iniciar compilação</button>
+      </div>
+
+      <!-- Passo 2: progresso -->
+      <div id="comp-progresso" hidden>
+        <div class="modal-topo"><h2>Compilando…</h2></div>
+        <div class="prog-emoji">🍿</div>
+        <h3 class="prog-titulo">Seu clipe está sendo compilado!</h3>
+        <div class="prog-barra"><div id="prog-preench" class="prog-preench"></div></div>
+        <p><strong id="prog-pct">0%</strong> · <span id="prog-eta">calculando…</span></p>
+        <p class="prog-dica">Fique à vontade para sair desta página, o clipe continua sendo compilado.</p>
+        <button id="btn-cancelar-compilacao" class="btn btn-fantasma">Cancelar</button>
+      </div>
+
+      <!-- Passo 3: concluído -->
+      <div id="comp-pronto" hidden>
+        <div class="modal-topo">
+          <h2>Pronto! 🎉</h2>
+          <button class="modal-fechar" data-fechar>✕</button>
+        </div>
+        <video id="video-final" class="video-final" controls playsinline></video>
+        <div class="comp-acoes">
+          <a id="btn-baixar" class="btn btn-amarelo" download>Baixar</a>
+          <button id="btn-copiar-link" class="btn btn-fantasma">Copiar link local</button>
+          <button id="btn-editar-novamente" class="btn btn-fantasma">Editar novamente</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Mensagens de erro/sucesso flutuantes -->
+  <div id="toasts" aria-live="polite"></div>
+
+  <!-- Biblioteca de arrastar/redimensionar (servida localmente, funciona offline) -->
+  <script src="/vendor/interact.min.js"></script>
+  <script src="js/layouts.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/biblioteca.js"></script>
+  <script src="js/timeline.js"></script>
+  <script src="js/editor.js"></script>
+  <script src="js/compilar.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

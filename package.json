@@ -1,0 +1,22 @@
+{
+  "name": "freeclip",
+  "version": "1.0.0",
+  "description": "FreeClip — clone gratuito e self-hosted do Streamlabs Cross Clip. Transforma clipes da Kick em vídeos verticais 9:16.",
+  "main": "server/index.js",
+  "type": "commonjs",
+  "license": "MIT",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "update-ytdlp": "node server/update-ytdlp.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "express": "^4.21.2",
+    "interactjs": "^1.10.27",
+    "multer": "^2.0.1"
+  }
+}
