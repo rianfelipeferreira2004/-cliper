@@ -1,0 +1,19 @@
+# Render Blueprint — deploy com 1 clique (conecte este repo no dashboard do Render)
+# ATENÇÃO: o plano free tem disco efêmero (clipes somem ao reiniciar).
+# Para manter a biblioteca, use um plano com disco persistente e descomente
+# o bloco "disk" abaixo.
+services:
+  - type: web
+    name: freeclip
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 10000
+      # - key: MAX_RENDER_JOBS
+      #   value: 1
+    # disk:
+    #   name: freeclip-data
+    #   mountPath: /app/data
+    #   sizeGB: 5

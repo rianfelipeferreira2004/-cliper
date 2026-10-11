@@ -125,6 +125,25 @@ freeclip/
 └── data/               # clips.json + vídeos, thumbs, saídas (locais)
 ```
 
+## Deploy online (Render / Railway / Fly.io / VPS)
+
+> **A Vercel (e qualquer serverless) NÃO funciona**: ela executa funções curtas
+> com timeout e sem disco persistente — o FreeClip precisa de processo Node
+> contínuo (fila de render), `ffmpeg`/`yt-dlp` e pasta `data/`. Use abaixo.
+
+O projeto já vem com `Dockerfile` + `render.yaml`:
+
+- **Render (mais fácil):** Dashboard → New → Blueprint → conecte este repo.
+  O plano free funciona, mas o disco é efêmero (clipes somem ao reiniciar);
+  para manter a biblioteca, ative o `disk` no `render.yaml` (plano pago).
+- **Railway / Fly.io:** crie o serviço a partir do repo (Dockerfile detectado
+  sozinho); adicione um **volume** montado em `/app/data` para persistir.
+- **VPS (qualquer):** `docker build -t freeclip . && docker run -p 3000:3000 -v ./data:/app/data freeclip`.
+- A porta vem da variável `PORT`; o health check é `GET /api/health`.
+- Nota: IPs de datacenter caem mais no Cloudflare da Kick — se um link não
+  baixar na nuvem, atualize o yt-dlp (`npm run update-ytdlp`) ou suba o
+  arquivo pelo upload (funciona igual).
+
 ## Licença
 
 MIT — use, modifique e compartilhe à vontade.
